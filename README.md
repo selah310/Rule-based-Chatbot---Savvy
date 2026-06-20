@@ -11,3 +11,4 @@ every response. Includes two mini-games: Number Guessing and AI Trivia.
 ## How to run
 - Terminal: `python3 chatbot.py`
 - Browser: open `savvy.html` directly
+- direct link is as follows : https://selah310.github.io/Rule-based-Chatbot---Savvy/savvy.html
