@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Savvy — Rule-Based AI Chatbot</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Syne:wght@600;700&family=Inter:wght@400;500&display=swap');
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --accent:      #7c6af7;
+      --accent-glow: rgba(124,106,247,0.25);
+      --accent-dim:  #6254d4;
+      --green:       #34d399;
+      --red:         #f87171;
+      --yellow:      #fbbf24;
+      --font-display: 'Syne', sans-serif;
+      --font-mono:    'JetBrains Mono', monospace;
+      --font-ui:      'Inter', sans-serif;
+      --radius:       13px;
+      --transition:   0.22s ease;
+    }
+
+    [data-theme="dark"] {
+      --bg:           #0e0f14;
+      --surface:      #14161f;
+      --surface2:     #1b1e2b;
+      --surface3:     #222638;
+      --border:       #2c3048;
+      --text:         #e4e8f4;
+      --text-muted:   #636b8a;
+      --text-faint:   #3a3f58;
+      --bot-bubble:   #191c28;
+      --user-bubble:  #1a1535;
+      --user-text:    #c4b8ff;
+      --toggle-bg:    #1b1e2b;
+      --shadow:       0 8px 40px rgba(0,0,0,0.45);
+    }
+
+    [data-theme="light"] {
+      --bg:           #f0f0f7;
+      --surface:      #ffffff;
+      --surface2:     #f5f5fc;
+      --surface3:     #ecedf8;
+      --border:       #dcddf0;
+      --text:         #1a1b2e;
+      --text-muted:   #7879a0;
+      --text-faint:   #c8c9e0;
+      --bot-bubble:   #f5f5fc;
+      --user-bubble:  #ede9ff;
+      --user-text:    #5b4cc4;
+      --toggle-bg:    #ecedf8;
+      --shadow:       0 8px 40px rgba(100,100,160,0.13);
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-ui);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      transition: background var(--transition), color var(--transition);
+    }
+
+    .shell {
+      width: 100%;
+      max-width: 700px;
+      height: 92vh;
+      max-height: 820px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      transition: background var(--transition), border-color var(--transition), box-shadow var(--transition);
+    }
+
+    /* ── HEADER ── */
+    .header {
+      padding: 14px 18px;
+      background: var(--surface2);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+      transition: background var(--transition), border-color var(--transition);
+    }
+    .avatar {
+      width: 36px; height: 36px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, var(--accent), #a78bfa);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; flex-shrink: 0;
+    }
+    .header-info { flex: 1; }
+    .header-name {
+      font-family: var(--font-display);
+      font-size: 15px; font-weight: 700;
+      color: var(--text); letter-spacing: 0.01em;
+    }
+    .header-sub {
+      font-family: var(--font-mono);
+      font-size: 10px; color: var(--text-muted); margin-top: 1px;
+    }
+    .header-right { display: flex; align-items: center; gap: 10px; }
+
+    .theme-toggle {
+      background: var(--toggle-bg);
+      border: 1px solid var(--border);
+      border-radius: 20px; padding: 4px;
+      display: flex; gap: 2px; cursor: pointer;
+    }
+    .theme-toggle-btn {
+      background: transparent; border: none;
+      border-radius: 16px; width: 28px; height: 24px;
+      cursor: pointer; font-size: 13px;
+      display: flex; align-items: center; justify-content: center;
+      transition: background var(--transition); color: var(--text-muted);
+    }
+    .theme-toggle-btn.active { background: var(--accent); color: white; }
+
+    .online-badge {
+      display: flex; align-items: center; gap: 5px;
+      font-family: var(--font-mono); font-size: 10px; color: var(--green);
+    }
+    .online-dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: var(--green); box-shadow: 0 0 6px var(--green);
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.4;} }
+
+    /* ── GAME BANNER ── */
+    .game-banner {
+      margin: 10px 16px 0;
+      padding: 10px 14px;
+      background: var(--surface3);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      display: none; align-items: center; gap: 10px; flex-shrink: 0;
+    }
+    .game-banner.visible { display: flex; }
+    .game-banner-text {
+      font-family: var(--font-mono); font-size: 11px;
+      color: var(--text-muted); flex: 1;
+    }
+    .game-banner-text strong { color: var(--accent); }
+    .game-quit-btn {
+      background: transparent; border: 1px solid var(--border);
+      border-radius: 6px; color: var(--red);
+      font-family: var(--font-mono); font-size: 10px;
+      padding: 3px 9px; cursor: pointer;
+      transition: border-color var(--transition);
+    }
+    .game-quit-btn:hover { border-color: var(--red); }
+
+    /* ── CHAT WINDOW ── */
+    .chat-window {
+      flex: 1; overflow-y: auto;
+      padding: 20px 18px;
+      display: flex; flex-direction: column; gap: 14px;
+      scroll-behavior: smooth;
+    }
+    .chat-window::-webkit-scrollbar { width: 4px; }
+    .chat-window::-webkit-scrollbar-track { background: transparent; }
+    .chat-window::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+    /* ── MESSAGES ── */
+    .message {
+      display: flex; flex-direction: column;
+      max-width: 80%; animation: fadeUp 0.18s ease;
+    }
+    @keyframes fadeUp {
+      from{opacity:0;transform:translateY(7px);}
+      to{opacity:1;transform:translateY(0);}
+    }
+    .message.bot  { align-self: flex-start; }
+    .message.user { align-self: flex-end; }
+
+    .msg-label {
+      font-family: var(--font-mono); font-size: 9px;
+      color: var(--text-muted); margin-bottom: 4px;
+      letter-spacing: 0.07em; text-transform: uppercase;
+    }
+    .message.user .msg-label { text-align: right; }
+
+    .bubble {
+      padding: 11px 15px; border-radius: 10px;
+      font-size: 13.5px; line-height: 1.65;
+      transition: background var(--transition), border-color var(--transition);
+      white-space: pre-wrap;
+    }
+    .message.bot .bubble {
+      background: var(--bot-bubble); border: 1px solid var(--border);
+      border-top-left-radius: 3px; color: var(--text);
+    }
+    .message.user .bubble {
+      background: var(--user-bubble); border: 1px solid transparent;
+      border-top-right-radius: 3px; color: var(--user-text);
+      font-family: var(--font-mono); font-size: 12.5px;
+    }
+    .bubble.win  { border-color: var(--green) !important; }
+    .bubble.lose { border-color: var(--red)   !important; }
+    .bubble.info { border-color: var(--yellow) !important; }
+
+    /* ── TRIVIA CHOICES ── */
+    .trivia-choices {
+      display: flex; flex-direction: column; gap: 7px;
+      margin-top: 10px;
+    }
+    .trivia-choice-btn {
+      background: var(--surface3); border: 1px solid var(--border);
+      border-radius: 8px; color: var(--text);
+      font-family: var(--font-mono); font-size: 12px;
+      padding: 8px 13px; cursor: pointer; text-align: left;
+      transition: border-color var(--transition), background var(--transition);
+    }
+    .trivia-choice-btn:hover {
+      border-color: var(--accent); background: var(--accent-glow);
+    }
+    .trivia-choice-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .trivia-choice-btn.correct { border-color: var(--green) !important; color: var(--green); }
+    .trivia-choice-btn.wrong   { border-color: var(--red)   !important; color: var(--red);   }
+
+    /* ── TYPING ── */
+    .typing-wrap { align-self: flex-start; animation: fadeUp 0.18s ease; }
+    .typing-indicator {
+      display: flex; gap: 5px; align-items: center;
+      padding: 12px 16px;
+      background: var(--bot-bubble); border: 1px solid var(--border);
+      border-radius: 10px; border-top-left-radius: 3px;
+    }
+    .typing-indicator span {
+      width: 6px; height: 6px; background: var(--accent);
+      border-radius: 50%; animation: blink 1.2s infinite;
+    }
+    .typing-indicator span:nth-child(2){animation-delay:0.2s;}
+    .typing-indicator span:nth-child(3){animation-delay:0.4s;}
+    @keyframes blink{0%,80%,100%{opacity:0.2;transform:scale(0.85);}40%{opacity:1;transform:scale(1);}}
+
+    /* ── SUGGESTIONS ── */
+    .suggestions {
+      padding: 4px 18px 10px;
+      display: flex; gap: 7px; flex-wrap: wrap; flex-shrink: 0;
+    }
+    .suggestion-btn {
+      background: transparent; border: 1px solid var(--border);
+      color: var(--text-muted); font-family: var(--font-mono); font-size: 11px;
+      padding: 5px 12px; border-radius: 20px; cursor: pointer;
+      transition: border-color var(--transition), color var(--transition), background var(--transition);
+    }
+    .suggestion-btn:hover {
+      border-color: var(--accent); color: var(--accent); background: var(--accent-glow);
+    }
+
+    /* ── INPUT BAR ── */
+    .input-bar {
+      border-top: 1px solid var(--border); padding: 12px 14px;
+      display: flex; gap: 9px; align-items: center; flex-shrink: 0;
+      background: var(--surface2);
+      transition: background var(--transition), border-color var(--transition);
+    }
+    .prompt-label {
+      font-family: var(--font-mono); font-size: 12px;
+      color: var(--accent); flex-shrink: 0;
+    }
+    #user-input {
+      flex: 1; background: transparent; border: none; outline: none;
+      color: var(--text); font-family: var(--font-mono); font-size: 13px;
+      caret-color: var(--accent);
+    }
+    #user-input::placeholder { color: var(--text-faint); }
+    #user-input:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    #send-btn {
+      background: var(--accent); border: none; border-radius: 8px;
+      width: 34px; height: 34px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; transition: background var(--transition), transform 0.1s;
+    }
+    #send-btn:hover  { background: var(--accent-dim); }
+    #send-btn:active { transform: scale(0.92); }
+    #send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    #send-btn svg { fill: white; }
+
+    /* ── STATUS BAR ── */
+    .statusbar {
+      padding: 5px 16px; border-top: 1px solid var(--border);
+      background: var(--bg);
+      display: flex; align-items: center; gap: 6px; flex-shrink: 0;
+      transition: background var(--transition), border-color var(--transition);
+    }
+    .statusbar-text { font-family: var(--font-mono); font-size: 9.5px; color: var(--text-muted); }
+    .statusbar-right { margin-left: auto; font-family: var(--font-mono); font-size: 9.5px; color: var(--text-muted); }
+  </style>
+</head>
+<body>
+<div class="shell">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="avatar">🤖</div>
+    <div class="header-info">
+      <div class="header-name">Savvy</div>
+      <div class="header-sub">rule-based engine · deterministic · O(1) lookup</div>
+    </div>
+    <div class="header-right">
+      <div class="online-badge"><div class="online-dot"></div>online</div>
+      <div class="theme-toggle" title="Toggle theme">
+        <button class="theme-toggle-btn active" id="btn-dark"  onclick="setTheme('dark')"  title="Dark mode">🌙</button>
+        <button class="theme-toggle-btn"        id="btn-light" onclick="setTheme('light')" title="Light mode">☀️</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Game banner -->
+  <div class="game-banner" id="game-banner">
+    <span class="game-banner-text" id="banner-text">🎮 Game active</span>
+    <button class="game-quit-btn" onclick="quitGame()">Quit game</button>
+  </div>
+
+  <!-- Chat window -->
+  <div class="chat-window" id="chat-window"></div>
+
+  <!-- Suggestions -->
+  <div class="suggestions" id="suggestions">
+    <button class="suggestion-btn" onclick="sendSuggestion('Who are you')">Who are you?</button>
+    <button class="suggestion-btn" onclick="sendSuggestion('What is AI')">What is AI?</button>
+    <button class="suggestion-btn" onclick="sendSuggestion('Play a game')">🎮 Play a game</button>
+    <button class="suggestion-btn" onclick="sendSuggestion('Tell me a joke')">Tell me a joke</button>
+    <button class="suggestion-btn" onclick="sendSuggestion('Help')">Help</button>
+  </div>
+
+  <!-- Input bar -->
+  <div class="input-bar">
+    <span class="prompt-label" id="prompt-label">you ~$</span>
+    <input id="user-input" type="text" placeholder="Type a message…" autocomplete="off"/>
+    <button id="send-btn" onclick="handleSend()" title="Send">
+      <svg width="15" height="15" viewBox="0 0 24 24"><path d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg>
+    </button>
+  </div>
+
+  <!-- Status bar -->
+  <div class="statusbar">
+    <div class="online-dot" id="status-dot" style="width:6px;height:6px"></div>
+    <span class="statusbar-text" id="status-text">engine: deterministic · no ML · pure logic</span>
+    <span class="statusbar-right" id="msg-count">0 messages</span>
+  </div>
+
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+//  KNOWLEDGE BASE
+// ═══════════════════════════════════════════════════════
+const KB = {
+  "hello"                   : "Hey {name}! Great to have you here. What's on your mind?",
+  "hi"                      : "Hi {name}! What can I help you with?",
+  "hey"                     : "Hey {name}! What's up?",
+  "good morning"            : "Good morning, {name}! Hope the day's treating you well.",
+  "good evening"            : "Good evening, {name}! What would you like to talk about?",
+  "who are you"             : "I'm Savvy — a rule-based AI chatbot built by Anna at DecodeLabs. No neural networks, just pure logic!",
+  "what are you"            : "I'm a deterministic chatbot. Every response is hard-coded and 100% predictable — zero hallucination risk!",
+  "your name"               : "I'm Savvy! Nice to meet you, {name}.",
+  "what is ai"              : "Artificial Intelligence is the field of building systems that can do things that normally require human intelligence — like understanding language, recognising images, or making decisions.",
+  "what is a chatbot"       : "A chatbot is a program that simulates conversation. Rule-based bots like me use fixed logic; ML-based bots learn patterns from data.",
+  "what is machine learning": "Machine Learning is a subset of AI where systems learn from data instead of following hand-written rules. That's Project 2 territory — stay tuned!",
+  "rule based"              : "Rule-based AI uses dictionary logic. It's transparent, safe, and great for controlled domains.",
+  "help"                    : "I can answer questions about AI, crack a joke, or challenge you to a game, {name}!\n\nTry asking:\n• 'What is AI?'\n• 'Who are you?'\n• 'Tell me a joke'\n• 'Play a game'",
+  "what can you do"         : "I can chat about AI basics, crack a joke, or play a game with you — number guessing or AI trivia. Type 'play a game' to pick!",
+  "how are you"             : "I'm a bundle of if-else logic — feeling deterministic as ever! How about you, {name}?",
+  "i am fine"               : "Glad to hear it, {name}! Anything I can help with?",
+  "i am good"               : "Awesome! Let me know if you need anything, {name}.",
+  "thank you"               : "You're welcome, {name}! Happy to help.",
+  "thanks"                  : "No problem at all!",
+  "tell me a joke"          : "Why do programmers prefer dark mode?\nBecause light attracts bugs! 🐛",
+  "joke"                    : "Why did the AI go to school?\nTo improve its neural net-work! 😄",
+  "another joke"            : "I told my computer I needed a break.\nNow it won't stop sending me Kit-Kat ads. 🍫",
+  "play a game"             : "__GAME_MENU__",
+  "game"                    : "__GAME_MENU__",
+  "lets play"               : "__GAME_MENU__",
+  "play game"               : "__GAME_MENU__",
+  "games"                   : "__GAME_MENU__",
+  "bye"                     : "See you, {name}! Keep building cool things. 👋",
+  "goodbye"                 : "Goodbye, {name}! Remember: every rule you write makes you smarter. 🚀",
+  "see you"                 : "Later, {name}! Keep coding. 💻",
+};
+
+const EXIT_COMMANDS = new Set(["exit", "quit", "q", "stop"]);
+const FALLBACK = "Hmm, not sure about that one yet, {name} — my knowledge base is still growing!\nType 'help' to see what I can do, or 'play a game' for some fun.";
+
+// ── USER NAME / ONBOARDING ──────────────────────────────────────────
+let userName = "";
+let awaitingName = true; // true until the user gives their name
+
+function personalize(text) {
+  return text.replace(/\{name\}/g, userName || "there");
+}
+
+function cleanName(raw) {
+  // Handles "Anna", "my name is Anna", "I'm Anna", etc.
+  let t = raw.trim();
+  const lower = t.toLowerCase();
+  const prefixes = ["my name is ", "i am ", "i'm ", "im ", "call me "];
+  for (const p of prefixes) {
+    if (lower.startsWith(p)) { t = t.slice(p.length).trim(); break; }
+  }
+  // Take just the first word as the name
+  const firstWord = t.split(/\s+/)[0] || "";
+  if (!firstWord) return "";
+  return firstWord.charAt(0).toUpperCase() + firstWord.slice(1).toLowerCase();
+}
+
+// ═══════════════════════════════════════════════════════
+//  GAME STATE
+// ═══════════════════════════════════════════════════════
+// Modes: null | 'menu' | 'number' | 'trivia'
+let gameMode     = null;
+let secretNumber = 0;
+let guessAttempts = 0;
+const GMIN = 1, GMAX = 20;
+
+// Trivia
+const TRIVIA_QUESTIONS = [
+  {
+    q: "What does 'AI' stand for?",
+    choices: ["A) Automated Interface", "B) Artificial Intelligence", "C) Automated Intelligence", "D) Artificial Interface"],
+    answer: "b", explanation: "AI stands for Artificial Intelligence — the simulation of human intelligence by machines."
+  },
+  {
+    q: "Which language is most commonly used for AI development?",
+    choices: ["A) Java", "B) C++", "C) Python", "D) Ruby"],
+    answer: "c", explanation: "Python dominates AI/ML thanks to libraries like TensorFlow, PyTorch, and scikit-learn."
+  },
+  {
+    q: "What type of AI is a rule-based chatbot like me?",
+    choices: ["A) Machine Learning", "B) Deep Learning", "C) Deterministic / Symbolic AI", "D) Reinforcement Learning"],
+    answer: "c", explanation: "Rule-based chatbots are Deterministic/Symbolic AI — they follow explicitly programmed rules with no learning involved."
+  },
+  {
+    q: "What is a 'neural network' inspired by?",
+    choices: ["A) Computer circuits", "B) The human brain", "C) Decision trees", "D) Spreadsheets"],
+    answer: "b", explanation: "Neural networks are loosely modelled on the structure of neurons in the human brain."
+  },
+  {
+    q: "What does 'ML' stand for in tech?",
+    choices: ["A) Machine Logic", "B) Meta Language", "C) Machine Learning", "D) Model Layer"],
+    answer: "c", explanation: "ML = Machine Learning — a branch of AI where systems learn patterns from data."
+  },
+  {
+    q: "Which of these is an example of AI in everyday life?",
+    choices: ["A) A light switch", "B) A spam email filter", "C) A USB drive", "D) A keyboard"],
+    answer: "b", explanation: "Spam filters use ML to classify emails as spam or not — a classic real-world AI application."
+  },
+  {
+    q: "What is 'overfitting' in machine learning?",
+    choices: ["A) Training a model too little", "B) Adding too many features", "C) A model memorising training data & failing on new data", "D) Running out of memory"],
+    answer: "c", explanation: "Overfitting is when a model learns training data too well and can't generalise to unseen examples."
+  },
+];
+
+let triviaIndex  = 0;
+let triviaScore  = 0;
+let triviaOrder  = [];
+let waitingForTrivia = false;
+
+// ═══════════════════════════════════════════════════════
+//  DOM HELPERS
+// ═══════════════════════════════════════════════════════
+const chatWindow = document.getElementById("chat-window");
+const inputEl    = document.getElementById("user-input");
+const countEl    = document.getElementById("msg-count");
+let   msgCount   = 0;
+let   sessionEnded = false;
+
+function scrollBottom() { chatWindow.scrollTop = chatWindow.scrollHeight; }
+
+function appendMessage(role, text, extra) {
+  const wrap   = document.createElement("div");
+  wrap.className = "message " + role;
+  const label  = document.createElement("span");
+  label.className = "msg-label";
+  label.textContent = role === "bot" ? "SAVVY" : "YOU";
+  const bubble = document.createElement("div");
+  bubble.className = "bubble" + (extra ? " " + extra : "");
+  bubble.textContent = text;
+  wrap.appendChild(label);
+  wrap.appendChild(bubble);
+  chatWindow.appendChild(wrap);
+  scrollBottom();
+  msgCount++;
+  countEl.textContent = msgCount + " message" + (msgCount !== 1 ? "s" : "");
+  return bubble; // return for later mutation
+}
+
+function showTyping() {
+  const wrap = document.createElement("div");
+  wrap.className = "typing-wrap"; wrap.id = "typing";
+  const ind = document.createElement("div");
+  ind.className = "typing-indicator";
+  ind.innerHTML = "<span></span><span></span><span></span>";
+  wrap.appendChild(ind);
+  chatWindow.appendChild(wrap);
+  scrollBottom();
+}
+function removeTyping() { const el=document.getElementById("typing"); if(el) el.remove(); }
+
+function updateBanner(text) {
+  document.getElementById("banner-text").innerHTML = text;
+}
+function showBanner(text) {
+  document.getElementById("game-banner").classList.add("visible");
+  updateBanner(text);
+}
+function hideBanner() {
+  document.getElementById("game-banner").classList.remove("visible");
+}
+function setPrompt(text) {
+  document.getElementById("prompt-label").textContent = text;
+}
+function setPlaceholder(text) {
+  inputEl.placeholder = text;
+}
+
+// ═══════════════════════════════════════════════════════
+//  SANITIZE
+// ═══════════════════════════════════════════════════════
+function sanitize(raw) {
+  return raw.toLowerCase().trim().replace(/[^a-z0-9\s]/g, "").trim();
+}
+
+// ═══════════════════════════════════════════════════════
+//  GAME MENU
+// ═══════════════════════════════════════════════════════
+function showGameMenu() {
+  gameMode = "menu";
+  setPrompt("choose ~$");
+  setPlaceholder("Type 1 or 2…");
+  showBanner("🎮 Choose your game — type 1 or 2");
+  appendMessage("bot",
+    "Let's play! Pick a game:\n\n  1️⃣  Number Guessing — I pick a number 1–20, you guess it.\n  2️⃣  AI Trivia Quiz  — 7 questions about AI & tech.\n\nType 1 or 2 to choose, or 'exit' to cancel.",
+    "info"
+  );
+}
+
+function handleMenuInput(raw) {
+  const clean = raw.trim();
+  if (clean === "1") {
+    gameMode = null;
+    startNumberGame();
+  } else if (clean === "2") {
+    gameMode = null;
+    startTriviaGame();
+  } else {
+    appendMessage("bot", "Just type 1 for Number Guessing or 2 for AI Trivia!", "");
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+//  GAME 1 — NUMBER GUESSING
+// ═══════════════════════════════════════════════════════
+function startNumberGame() {
+  gameMode      = "number";
+  secretNumber  = Math.floor(Math.random() * GMAX) + GMIN;
+  guessAttempts = 0;
+  setPrompt("guess ~$");
+  setPlaceholder("Enter a number 1–20…");
+  showBanner(`🔢 <strong>Number Guessing</strong> &nbsp;·&nbsp; Range: <strong>1–20</strong> &nbsp;·&nbsp; Attempts: <strong id="attempt-count">0</strong>`);
+  appendMessage("bot", `Game on! 🎮 I'm thinking of a number between ${GMIN} and ${GMAX}.\nTry to nail it in as few guesses as possible. What's your first guess?`, "");
+}
+
+function handleNumberInput(raw) {
+  const num = parseInt(raw.trim(), 10);
+  if (isNaN(num)) {
+    appendMessage("bot", "That's not a number! Give me a whole number between 1 and 20.", ""); return;
+  }
+  if (num < GMIN || num > GMAX) {
+    appendMessage("bot", `Out of range! Pick a number between ${GMIN} and ${GMAX}.`, ""); return;
+  }
+  guessAttempts++;
+  const counter = document.getElementById("attempt-count");
+  if (counter) counter.textContent = guessAttempts;
+
+  if (num === secretNumber) {
+    const praise = guessAttempts === 1 ? "Unbelievable — first try!!! 🏆" :
+                   guessAttempts <= 3  ? `Amazing — only ${guessAttempts} attempts! 🎉` :
+                   guessAttempts <= 6  ? `Nice work — ${guessAttempts} attempts! 🙌` :
+                                         `Got it in ${guessAttempts} attempts. Keep practising! 💪`;
+    appendMessage("bot", `🎯 Correct! The number was ${secretNumber}.\n${praise}\n\nType 'play a game' to go again, or just keep chatting!`, "win");
+    endGame();
+  } else if (num < secretNumber) {
+    const close = secretNumber - num <= 3 ? " You're really close!" : "";
+    appendMessage("bot", `📈 Higher!${close}`, "");
+  } else {
+    const close = num - secretNumber <= 3 ? " You're really close!" : "";
+    appendMessage("bot", `📉 Lower!${close}`, "");
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+//  GAME 2 — AI TRIVIA QUIZ
+// ═══════════════════════════════════════════════════════
+function startTriviaGame() {
+  gameMode     = "trivia";
+  triviaScore  = 0;
+  triviaIndex  = 0;
+  waitingForTrivia = false;
+  // Shuffle questions
+  triviaOrder = [...Array(TRIVIA_QUESTIONS.length).keys()]
+    .sort(() => Math.random() - 0.5);
+  setPrompt("trivia ~$");
+  setPlaceholder("Type a, b, c or d…");
+  showBanner(`🧠 <strong>AI Trivia</strong> &nbsp;·&nbsp; Question: <strong id="q-count">1 / ${TRIVIA_QUESTIONS.length}</strong> &nbsp;·&nbsp; Score: <strong id="t-score">0</strong>`);
+  appendMessage("bot", `AI Trivia time! 🧠 ${TRIVIA_QUESTIONS.length} questions about AI & tech.\nType the letter of your answer (a, b, c, or d). Let's go!`, "");
+  setTimeout(() => askTriviaQuestion(), 600);
+}
+
+function askTriviaQuestion() {
+  if (triviaIndex >= TRIVIA_QUESTIONS.length) { endTriviaGame(); return; }
+
+  waitingForTrivia = true;
+  const q = TRIVIA_QUESTIONS[triviaOrder[triviaIndex]];
+
+  // Build bubble with clickable choices
+  const wrap   = document.createElement("div");
+  wrap.className = "message bot";
+  const label  = document.createElement("span");
+  label.className = "msg-label"; label.textContent = "SAVVY";
+  const bubble = document.createElement("div");
+  bubble.className = "bubble";
+
+  const qText = document.createElement("div");
+  qText.style.marginBottom = "10px";
+  qText.textContent = `Q${triviaIndex + 1}. ${q.q}`;
+  bubble.appendChild(qText);
+
+  const choicesDiv = document.createElement("div");
+  choicesDiv.className = "trivia-choices";
+
+  q.choices.forEach(choice => {
+    const btn = document.createElement("button");
+    btn.className = "trivia-choice-btn";
+    btn.textContent = choice;
+    const letter = choice[0].toLowerCase(); // "a", "b", "c", "d"
+    btn.onclick = () => handleTriviaChoice(letter, q, choicesDiv);
+    choicesDiv.appendChild(btn);
+  });
+
+  bubble.appendChild(choicesDiv);
+  wrap.appendChild(label);
+  wrap.appendChild(bubble);
+  chatWindow.appendChild(wrap);
+  scrollBottom();
+  msgCount++;
+  countEl.textContent = msgCount + " message" + (msgCount !== 1 ? "s" : "");
+}
+
+function handleTriviaChoice(letter, q, choicesDiv) {
+  if (!waitingForTrivia) return;
+  waitingForTrivia = false;
+
+  // Disable all buttons and highlight
+  const btns = choicesDiv.querySelectorAll(".trivia-choice-btn");
+  btns.forEach(btn => {
+    btn.disabled = true;
+    const btnLetter = btn.textContent[0].toLowerCase();
+    if (btnLetter === q.answer)  btn.classList.add("correct");
+    if (btnLetter === letter && letter !== q.answer) btn.classList.add("wrong");
+  });
+
+  const correct = letter === q.answer;
+  if (correct) triviaScore++;
+
+  // Update banner
+  const qCounter = document.getElementById("q-count");
+  const tScore   = document.getElementById("t-score");
+  if (qCounter) qCounter.textContent = `${triviaIndex + 1} / ${TRIVIA_QUESTIONS.length}`;
+  if (tScore)   tScore.textContent   = triviaScore;
+
+  const feedback = correct
+    ? `✅ Correct! ${q.explanation}`
+    : `❌ Not quite. The answer was ${q.answer.toUpperCase()}. ${q.explanation}`;
+
+  setTimeout(() => {
+    appendMessage("bot", feedback, correct ? "win" : "lose");
+    triviaIndex++;
+    if (triviaIndex < TRIVIA_QUESTIONS.length) {
+      setTimeout(() => askTriviaQuestion(), 700);
+    } else {
+      setTimeout(() => endTriviaGame(), 700);
+    }
+  }, 400);
+}
+
+// Also allow typing a/b/c/d for trivia
+function handleTriviaTypedInput(raw) {
+  if (!waitingForTrivia) {
+    appendMessage("bot", "Click one of the answer buttons above, or wait for the next question!", ""); return;
+  }
+  const letter = raw.trim().toLowerCase();
+  if (!["a","b","c","d"].includes(letter)) {
+    appendMessage("bot", "Just type a, b, c, or d — or click an answer button!", ""); return;
+  }
+  // Find current question's choicesDiv and simulate click
+  const allChoiceDivs = document.querySelectorAll(".trivia-choices");
+  const lastChoiceDiv = allChoiceDivs[allChoiceDivs.length - 1];
+  const q = TRIVIA_QUESTIONS[triviaOrder[triviaIndex]];
+  handleTriviaChoice(letter, q, lastChoiceDiv);
+}
+
+function endTriviaGame() {
+  const total = TRIVIA_QUESTIONS.length;
+  const pct   = Math.round((triviaScore / total) * 100);
+  const grade = pct === 100 ? "Perfect score! You're an AI genius! 🏆" :
+                pct >= 71   ? "Great job! Solid AI knowledge. 🎉" :
+                pct >= 43   ? "Not bad! Keep learning and you'll ace it. 📚" :
+                              "Room to grow — keep exploring AI concepts! 💡";
+  appendMessage("bot",
+    `Quiz complete! 🧠\n\nYour score: ${triviaScore} / ${total} (${pct}%)\n${grade}\n\nType 'play a game' to play again, or keep chatting!`,
+    triviaScore >= total * 0.7 ? "win" : "info"
+  );
+  endGame();
+}
+
+// ═══════════════════════════════════════════════════════
+//  QUIT / END GAME
+// ═══════════════════════════════════════════════════════
+function endGame() {
+  gameMode = null;
+  hideBanner();
+  setPrompt(`${userName} ~$`);
+  setPlaceholder("Type a message…");
+}
+
+function quitGame() {
+  if (gameMode === "number") {
+    appendMessage("bot", `Game over! The number was ${secretNumber}. Come back anytime — type 'play a game' to try again. 👾`, "");
+  } else if (gameMode === "trivia") {
+    appendMessage("bot", `Quiz ended early. You scored ${triviaScore} so far. Type 'play a game' to try again! 🧠`, "");
+  } else if (gameMode === "menu") {
+    appendMessage("bot", "No worries! Come back anytime — just type 'play a game'. 🎮", "");
+  }
+  endGame();
+}
+
+// ═══════════════════════════════════════════════════════
+//  MAIN SEND HANDLER
+// ═══════════════════════════════════════════════════════
+function handleSend() {
+  if (sessionEnded) return;
+  const raw = inputEl.value.trim();
+  if (!raw) return;
+  inputEl.value = "";
+
+  appendMessage("user", raw, "");
+  document.getElementById("suggestions").style.display = "none";
+
+  // ── Capture the user's name first, before anything else ──
+  if (awaitingName) {
+    const name = cleanName(raw);
+    if (!name) {
+      appendMessage("bot", "I didn't quite catch that — what should I call you?", "");
+      return;
+    }
+    userName = name;
+    awaitingName = false;
+    setPrompt(`${userName} ~$`);
+    setPlaceholder("Type a message…");
+    showTyping();
+    setTimeout(() => {
+      removeTyping();
+      appendMessage("bot", `Awesome, ${userName}! Great to meet you. 🎉\nType 'help' for tips, or pick a suggestion below. Type 'exit' to quit anytime.`, "");
+      document.getElementById("suggestions").style.display = "flex";
+    }, 450);
+    return;
+  }
+
+  // Route to active game
+  if (gameMode === "menu") {
+    showTyping();
+    setTimeout(() => { removeTyping(); handleMenuInput(raw); }, 400);
+    return;
+  }
+  if (gameMode === "number") {
+    showTyping();
+    setTimeout(() => { removeTyping(); handleNumberInput(raw); }, 400);
+    return;
+  }
+  if (gameMode === "trivia") {
+    handleTriviaTypedInput(sanitize(raw));
+    return;
+  }
+
+  const clean = sanitize(raw);
+
+  // Exit
+  if (EXIT_COMMANDS.has(clean)) {
+    showTyping();
+    setTimeout(() => {
+      removeTyping();
+      appendMessage("bot", `Session ended. Great work, ${userName} — keep building! 🚀`, "");
+      inputEl.disabled = true;
+      document.getElementById("send-btn").disabled = true;
+      document.getElementById("status-text").textContent = "session ended";
+      const dot = document.getElementById("status-dot");
+      dot.style.background = "var(--red)";
+      dot.style.boxShadow  = "0 0 6px var(--red)";
+      sessionEnded = true;
+    }, 500);
+    return;
+  }
+
+  const response = KB[clean] ?? FALLBACK;
+
+  showTyping();
+  setTimeout(() => {
+    removeTyping();
+    if (response === "__GAME_MENU__") {
+      showGameMenu();
+    } else {
+      appendMessage("bot", personalize(response), "");
+    }
+  }, 480);
+}
+
+function sendSuggestion(text) { inputEl.value = text; handleSend(); }
+inputEl.addEventListener("keydown", e => { if (e.key === "Enter") handleSend(); });
+
+// ═══════════════════════════════════════════════════════
+//  THEME
+// ═══════════════════════════════════════════════════════
+function setTheme(t) {
+  document.documentElement.setAttribute("data-theme", t);
+  document.getElementById("btn-dark").classList.toggle("active",  t === "dark");
+  document.getElementById("btn-light").classList.toggle("active", t === "light");
+}
+
+// ═══════════════════════════════════════════════════════
+//  BOOT
+// ═══════════════════════════════════════════════════════
+window.addEventListener("DOMContentLoaded", () => {
+  appendMessage("bot",
+    "Heya! Great to have you here. 👋\n\nFirst things first, what would you like me to call you?",
+    ""
+  );
+  setPrompt("you ~$");
+  setPlaceholder("Type your name…");
+  document.getElementById("suggestions").style.display = "none"; // reveal after name is given
+  inputEl.focus();
+});
+</script>
+</body>
+</html>
