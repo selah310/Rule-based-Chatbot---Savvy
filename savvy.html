@@ -82,7 +82,7 @@
       transition: background var(--transition), border-color var(--transition), box-shadow var(--transition);
     }
 
-    /* ── HEADER ── */
+    /*header code*/
     .header {
       padding: 14px 18px;
       background: var(--surface2);
@@ -138,7 +138,7 @@
     }
     @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.4;} }
 
-    /* ── GAME BANNER ── */
+    /*game ui*/
     .game-banner {
       margin: 10px 16px 0;
       padding: 10px 14px;
@@ -162,7 +162,7 @@
     }
     .game-quit-btn:hover { border-color: var(--red); }
 
-    /* ── CHAT WINDOW ── */
+    /*chatting*/
     .chat-window {
       flex: 1; overflow-y: auto;
       padding: 20px 18px;
@@ -173,7 +173,7 @@
     .chat-window::-webkit-scrollbar-track { background: transparent; }
     .chat-window::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
 
-    /* ── MESSAGES ── */
+    /*message*/
     .message {
       display: flex; flex-direction: column;
       max-width: 80%; animation: fadeUp 0.18s ease;
@@ -211,7 +211,7 @@
     .bubble.lose { border-color: var(--red)   !important; }
     .bubble.info { border-color: var(--yellow) !important; }
 
-    /* ── TRIVIA CHOICES ── */
+    /*ai quiz*/
     .trivia-choices {
       display: flex; flex-direction: column; gap: 7px;
       margin-top: 10px;
@@ -230,7 +230,7 @@
     .trivia-choice-btn.correct { border-color: var(--green) !important; color: var(--green); }
     .trivia-choice-btn.wrong   { border-color: var(--red)   !important; color: var(--red);   }
 
-    /* ── TYPING ── */
+    /*typing*/
     .typing-wrap { align-self: flex-start; animation: fadeUp 0.18s ease; }
     .typing-indicator {
       display: flex; gap: 5px; align-items: center;
@@ -246,7 +246,7 @@
     .typing-indicator span:nth-child(3){animation-delay:0.4s;}
     @keyframes blink{0%,80%,100%{opacity:0.2;transform:scale(0.85);}40%{opacity:1;transform:scale(1);}}
 
-    /* ── SUGGESTIONS ── */
+    /*suggestions*/
     .suggestions {
       padding: 4px 18px 10px;
       display: flex; gap: 7px; flex-wrap: wrap; flex-shrink: 0;
@@ -261,7 +261,7 @@
       border-color: var(--accent); color: var(--accent); background: var(--accent-glow);
     }
 
-    /* ── INPUT BAR ── */
+    /*input*/
     .input-bar {
       border-top: 1px solid var(--border); padding: 12px 14px;
       display: flex; gap: 9px; align-items: center; flex-shrink: 0;
@@ -291,7 +291,7 @@
     #send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
     #send-btn svg { fill: white; }
 
-    /* ── STATUS BAR ── */
+    /*status bar*/
     .statusbar {
       padding: 5px 16px; border-top: 1px solid var(--border);
       background: var(--bg);
@@ -305,7 +305,7 @@
 <body>
 <div class="shell">
 
-  <!-- Header -->
+  <!-- header edit2-->
   <div class="header">
     <div class="avatar">🤖</div>
     <div class="header-info">
@@ -321,16 +321,16 @@
     </div>
   </div>
 
-  <!-- Game banner -->
+  <!-- game banner edit -->
   <div class="game-banner" id="game-banner">
     <span class="game-banner-text" id="banner-text">🎮 Game active</span>
     <button class="game-quit-btn" onclick="quitGame()">Quit game</button>
   </div>
 
-  <!-- Chat window -->
+  <!-- chatting window -->
   <div class="chat-window" id="chat-window"></div>
 
-  <!-- Suggestions -->
+  <!-- suggestions -->
   <div class="suggestions" id="suggestions">
     <button class="suggestion-btn" onclick="sendSuggestion('Who are you')">Who are you?</button>
     <button class="suggestion-btn" onclick="sendSuggestion('What is AI')">What is AI?</button>
@@ -339,7 +339,7 @@
     <button class="suggestion-btn" onclick="sendSuggestion('Help')">Help</button>
   </div>
 
-  <!-- Input bar -->
+  <!-- input -->
   <div class="input-bar">
     <span class="prompt-label" id="prompt-label">you ~$</span>
     <input id="user-input" type="text" placeholder="Type a message…" autocomplete="off"/>
@@ -348,7 +348,7 @@
     </button>
   </div>
 
-  <!-- Status bar -->
+  <!-- status bar -->
   <div class="statusbar">
     <div class="online-dot" id="status-dot" style="width:6px;height:6px"></div>
     <span class="statusbar-text" id="status-text">engine: deterministic · no ML · pure logic</span>
@@ -358,9 +358,9 @@
 </div>
 
 <script>
-// ═══════════════════════════════════════════════════════
-//  KNOWLEDGE BASE
-// ═══════════════════════════════════════════════════════
+
+
+  
 const KB = {
   "hello"                   : "Hey {name}! Great to have you here. What's on your mind?",
   "hi"                      : "Hi {name}! What can I help you with?",
@@ -399,38 +399,34 @@ const KB = {
 const EXIT_COMMANDS = new Set(["exit", "quit", "q", "stop"]);
 const FALLBACK = "Hmm, not sure about that one yet, {name} — my knowledge base is still growing!\nType 'help' to see what I can do, or 'play a game' for some fun.";
 
-// ── USER NAME / ONBOARDING ──────────────────────────────────────────
+
 let userName = "";
-let awaitingName = true; // true until the user gives their name
+let awaitingName = true; 
 
 function personalize(text) {
   return text.replace(/\{name\}/g, userName || "there");
 }
 
 function cleanName(raw) {
-  // Handles "Anna", "my name is Anna", "I'm Anna", etc.
+ 
   let t = raw.trim();
   const lower = t.toLowerCase();
   const prefixes = ["my name is ", "i am ", "i'm ", "im ", "call me "];
   for (const p of prefixes) {
     if (lower.startsWith(p)) { t = t.slice(p.length).trim(); break; }
   }
-  // Take just the first word as the name
+
   const firstWord = t.split(/\s+/)[0] || "";
   if (!firstWord) return "";
   return firstWord.charAt(0).toUpperCase() + firstWord.slice(1).toLowerCase();
 }
 
-// ═══════════════════════════════════════════════════════
-//  GAME STATE
-// ═══════════════════════════════════════════════════════
-// Modes: null | 'menu' | 'number' | 'trivia'
 let gameMode     = null;
 let secretNumber = 0;
 let guessAttempts = 0;
 const GMIN = 1, GMAX = 20;
 
-// Trivia
+// quiz
 const TRIVIA_QUESTIONS = [
   {
     q: "What does 'AI' stand for?",
@@ -474,9 +470,7 @@ let triviaScore  = 0;
 let triviaOrder  = [];
 let waitingForTrivia = false;
 
-// ═══════════════════════════════════════════════════════
-//  DOM HELPERS
-// ═══════════════════════════════════════════════════════
+
 const chatWindow = document.getElementById("chat-window");
 const inputEl    = document.getElementById("user-input");
 const countEl    = document.getElementById("msg-count");
@@ -500,7 +494,7 @@ function appendMessage(role, text, extra) {
   scrollBottom();
   msgCount++;
   countEl.textContent = msgCount + " message" + (msgCount !== 1 ? "s" : "");
-  return bubble; // return for later mutation
+  return bubble; 
 }
 
 function showTyping() {
@@ -532,16 +526,12 @@ function setPlaceholder(text) {
   inputEl.placeholder = text;
 }
 
-// ═══════════════════════════════════════════════════════
-//  SANITIZE
-// ═══════════════════════════════════════════════════════
+
 function sanitize(raw) {
   return raw.toLowerCase().trim().replace(/[^a-z0-9\s]/g, "").trim();
 }
 
-// ═══════════════════════════════════════════════════════
-//  GAME MENU
-// ═══════════════════════════════════════════════════════
+
 function showGameMenu() {
   gameMode = "menu";
   setPrompt("choose ~$");
@@ -566,9 +556,6 @@ function handleMenuInput(raw) {
   }
 }
 
-// ═══════════════════════════════════════════════════════
-//  GAME 1 — NUMBER GUESSING
-// ═══════════════════════════════════════════════════════
 function startNumberGame() {
   gameMode      = "number";
   secretNumber  = Math.floor(Math.random() * GMAX) + GMIN;
@@ -607,15 +594,13 @@ function handleNumberInput(raw) {
   }
 }
 
-// ═══════════════════════════════════════════════════════
-//  GAME 2 — AI TRIVIA QUIZ
-// ═══════════════════════════════════════════════════════
+
 function startTriviaGame() {
   gameMode     = "trivia";
   triviaScore  = 0;
   triviaIndex  = 0;
   waitingForTrivia = false;
-  // Shuffle questions
+ //shuffling process
   triviaOrder = [...Array(TRIVIA_QUESTIONS.length).keys()]
     .sort(() => Math.random() - 0.5);
   setPrompt("trivia ~$");
@@ -631,7 +616,7 @@ function askTriviaQuestion() {
   waitingForTrivia = true;
   const q = TRIVIA_QUESTIONS[triviaOrder[triviaIndex]];
 
-  // Build bubble with clickable choices
+ 
   const wrap   = document.createElement("div");
   wrap.className = "message bot";
   const label  = document.createElement("span");
@@ -669,7 +654,7 @@ function handleTriviaChoice(letter, q, choicesDiv) {
   if (!waitingForTrivia) return;
   waitingForTrivia = false;
 
-  // Disable all buttons and highlight
+  
   const btns = choicesDiv.querySelectorAll(".trivia-choice-btn");
   btns.forEach(btn => {
     btn.disabled = true;
@@ -681,7 +666,7 @@ function handleTriviaChoice(letter, q, choicesDiv) {
   const correct = letter === q.answer;
   if (correct) triviaScore++;
 
-  // Update banner
+ 
   const qCounter = document.getElementById("q-count");
   const tScore   = document.getElementById("t-score");
   if (qCounter) qCounter.textContent = `${triviaIndex + 1} / ${TRIVIA_QUESTIONS.length}`;
@@ -702,7 +687,7 @@ function handleTriviaChoice(letter, q, choicesDiv) {
   }, 400);
 }
 
-// Also allow typing a/b/c/d for trivia
+
 function handleTriviaTypedInput(raw) {
   if (!waitingForTrivia) {
     appendMessage("bot", "Click one of the answer buttons above, or wait for the next question!", ""); return;
@@ -711,7 +696,7 @@ function handleTriviaTypedInput(raw) {
   if (!["a","b","c","d"].includes(letter)) {
     appendMessage("bot", "Just type a, b, c, or d — or click an answer button!", ""); return;
   }
-  // Find current question's choicesDiv and simulate click
+  
   const allChoiceDivs = document.querySelectorAll(".trivia-choices");
   const lastChoiceDiv = allChoiceDivs[allChoiceDivs.length - 1];
   const q = TRIVIA_QUESTIONS[triviaOrder[triviaIndex]];
@@ -732,16 +717,14 @@ function endTriviaGame() {
   endGame();
 }
 
-// ═══════════════════════════════════════════════════════
-//  QUIT / END GAME
-// ═══════════════════════════════════════════════════════
+
 function endGame() {
   gameMode = null;
   hideBanner();
   setPrompt(`${userName} ~$`);
   setPlaceholder("Type a message…");
 }
-
+//end game
 function quitGame() {
   if (gameMode === "number") {
     appendMessage("bot", `Game over! The number was ${secretNumber}. Come back anytime — type 'play a game' to try again. 👾`, "");
@@ -753,9 +736,9 @@ function quitGame() {
   endGame();
 }
 
-// ═══════════════════════════════════════════════════════
+
 //  MAIN SEND HANDLER
-// ═══════════════════════════════════════════════════════
+
 function handleSend() {
   if (sessionEnded) return;
   const raw = inputEl.value.trim();
@@ -765,7 +748,6 @@ function handleSend() {
   appendMessage("user", raw, "");
   document.getElementById("suggestions").style.display = "none";
 
-  // ── Capture the user's name first, before anything else ──
   if (awaitingName) {
     const name = cleanName(raw);
     if (!name) {
@@ -785,7 +767,7 @@ function handleSend() {
     return;
   }
 
-  // Route to active game
+  
   if (gameMode === "menu") {
     showTyping();
     setTimeout(() => { removeTyping(); handleMenuInput(raw); }, 400);
@@ -803,7 +785,7 @@ function handleSend() {
 
   const clean = sanitize(raw);
 
-  // Exit
+//bye
   if (EXIT_COMMANDS.has(clean)) {
     showTyping();
     setTimeout(() => {
@@ -836,18 +818,15 @@ function handleSend() {
 function sendSuggestion(text) { inputEl.value = text; handleSend(); }
 inputEl.addEventListener("keydown", e => { if (e.key === "Enter") handleSend(); });
 
-// ═══════════════════════════════════════════════════════
-//  THEME
-// ═══════════════════════════════════════════════════════
+
+//theme (dark or light mode)
 function setTheme(t) {
   document.documentElement.setAttribute("data-theme", t);
   document.getElementById("btn-dark").classList.toggle("active",  t === "dark");
   document.getElementById("btn-light").classList.toggle("active", t === "light");
 }
 
-// ═══════════════════════════════════════════════════════
-//  BOOT
-// ═══════════════════════════════════════════════════════
+
 window.addEventListener("DOMContentLoaded", () => {
   appendMessage("bot",
     "Heya! Great to have you here. 👋\n\nFirst things first, what would you like me to call you?",
@@ -855,7 +834,7 @@ window.addEventListener("DOMContentLoaded", () => {
   );
   setPrompt("you ~$");
   setPlaceholder("Type your name…");
-  document.getElementById("suggestions").style.display = "none"; // reveal after name is given
+  document.getElementById("suggestions").style.display = "none"; 
   inputEl.focus();
 });
 </script>
